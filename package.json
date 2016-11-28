@@ -1,0 +1,18 @@
+{
+  "name": "giant-bomb-history",
+  "version": "0.0.1",
+  "description": "This Day In Giant Bomb Video History",
+  "repository": "",
+  "author": {
+    "name": "Richard Porczak",
+    "email": "rporczak@gmail.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "node-rest-client": ">=1.8.0",
+    "twit": ">=2.2.2",
+    "moment": ">=2.14.0",
+    "random-js": ">=1.0.8"
+  },
+  "keywords": []
+}
