@@ -1,5 +1,5 @@
 var keys    = require('./config.js');
-var moment  = require('moment');
+var moment  = require('moment-timezone');
 var Random  = require('random-js');
 
 var Client  = require('node-rest-client').Client;
@@ -16,6 +16,8 @@ var args = {
 };
 
 exists = function (x) { return (typeof x !== "undefined" && x !== null); };
+
+getTime = function () { return moment().tz("America/Los_Angeles").unix() * 1000; }
 
 twoHoursIsh = function () {
   var TWO_HOURS       = 1000 * 60 * 60 * 2;
@@ -40,10 +42,10 @@ getYears = function () {
 
 getVideosURL = function (year) {
   var start, end;
-  var today = Date.now();
+  var today = getTime();
 
-  start = year + moment(Date.now()).startOf('day').format("-MM-DD") + " 00:00:00";
-  end   = year + moment(Date.now()).endOf('day').format("-MM-DD")   + " 23:59:59";
+  start = year + moment(getTime()).startOf('day').format("-MM-DD") + " 00:00:00";
+  end   = year + moment(getTime()).endOf('day').format("-MM-DD")   + " 23:59:59";
 
   var yearRange = start + "|" + end;
   var url = encodeURI(
@@ -209,7 +211,7 @@ handleError = function (error) {
 napTime = function () {
   // 2016-11-28 rporczak -- Wait for a while before trying again.
   var waitTime = twoHoursIsh();
-  var wakeTime = moment(Date.now() + waitTime).format("lll");
+  var wakeTime = moment(getTime() + waitTime).format("lll");
 
   console.log("!! Going to sleep until " + wakeTime);
   setTimeout(theHat, waitTime);
