@@ -132,8 +132,15 @@ getTwitterStatus = function (cb) {
 
   try {
     fetchVideos(URLs, [], function (results) {
+      // 2016-11-28 rporczak -- Video fetching complete.
+      console.log("   Video list compiled.");
+
       random.shuffle(results);
-      var video     = pickVideo(results, timeBias);
+      console.log("     -> results: ", results);
+
+      var video = pickVideo(results, timeBias);
+      console.log("     -> chose video: ", video);
+
       if (exists(video)) {
         // 2016-11-28 rporczak -- The video exists for this time of day.
         var date      = moment(video["publish_date"]).format("MMM DD, YYYY");
