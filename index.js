@@ -203,9 +203,11 @@ handleError = function (error) {
     if (err) {
       console.log('   DM error:', err);
     }
-  });
 
-  napTime();
+    // 2016-11-28 rporczak -- Stuff this in here so that the logs
+    //   are synchronous.
+    napTime();
+  });
 };
 
 napTime = function () {
@@ -260,7 +262,11 @@ theHat = function () {
                     } else {
                       // 2016-11-28 rporczak -- Encountered some error tweeting.
                       console.log("   Error making tweet.");
-                      handleError(err);
+                      if (exists(err.code) && exists(err.message)) {
+                        handleError(err.code + ": " + err.message);
+                      } else {}
+                        handleError(err);
+                      }
                     }
                   }
                 );
@@ -295,7 +301,11 @@ theHat = function () {
       } else {
         // 2016-11-28 rporczak -- Error fetching user!! Bounce out and report.
         console.log("   Error fetching user!");
-        handleError(err);
+        if (exists(err) && exists(err.code) && exists(err.message)) {
+          handleError(err.code + ": " + err.message);
+        } else {}
+          handleError(err);
+        }
       }
     }
   )
