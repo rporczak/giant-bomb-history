@@ -264,7 +264,7 @@ theHat = function () {
                       console.log("   Error making tweet.");
                       if (exists(err.code) && exists(err.message)) {
                         handleError(err.code + ": " + err.message);
-                      } else {}
+                      } else {
                         handleError(err);
                       }
                     }
@@ -303,7 +303,7 @@ theHat = function () {
         console.log("   Error fetching user!");
         if (exists(err) && exists(err.code) && exists(err.message)) {
           handleError(err.code + ": " + err.message);
-        } else {}
+        } else {
           handleError(err);
         }
       }
