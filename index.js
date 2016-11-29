@@ -58,11 +58,18 @@ getVideosURL = function (year) {
 };
 
 fetchVideos = function (URLs, videos, cb) {
+  // 2016-11-28 rporczak -- Recursively fetching videos from URLs,
+  //   pushing them into the videos array. Calling cb when we're done.
+
   var URL = URLs.shift();
 
   if (exists(URL)) {
+    console.log("   Fetching videos from: " + URL);
+
     rest.get(URL, args, function (data) {
       if (data["error"] === "OK") {
+        // 2016-11-28 rporczak -- Got video, no error.
+        console.log("     -> Got videos.");
         var results = data["results"];
         if (results.length !== 0) {
           for (var i = 0; i < results.length; i++) {
@@ -70,6 +77,11 @@ fetchVideos = function (URLs, videos, cb) {
           }
         }
         fetchVideos(URLs, videos, cb);
+      } else {
+        // 2016-11-28 rporczak -- Fetch failed. Assume the worst
+        //   and throw up our hands. We can always try later!
+        console.log("     -> ERROR.");
+        throw (new Error("/videos/ fetch failed: " + data["error"]))
       }
     });
   } else {
@@ -95,6 +107,10 @@ pickVideo = function (videos, timeBias) {
 };
 
 getTwitterStatus = function (cb) {
+  // 2016-11-28 rporczak -- Generating twitter status by fetching Giant Bomb
+  //   videos on this day for the past year.
+  console.log("   Fetching Giant Bomb videos...");
+
   var random = new Random(
     Random.engines.mt19937().seed(moment().format("MMMM DD YYYY")));
 
@@ -114,25 +130,61 @@ getTwitterStatus = function (cb) {
     URLs.push(videosURL);
   }
 
-  fetchVideos(URLs, [], function (results) {
-    random.shuffle(results);
-    var video = pickVideo(results, timeBias);
+  try {
+    fetchVideos(URLs, [], function (results) {
+      random.shuffle(results);
+      var video     = pickVideo(results, timeBias);
+      if (exists(video)) {
+        // 2016-11-28 rporczak -- The video exists for this time of day.
+        var date      = moment(video["publish_date"]).format("MMM DD, YYYY");
 
-    var date    = moment(video["publish_date"]).format("MMM DD, YYYY");
-    var status  = video.name + " (" + date + ") " + video["site_detail_url"];
+        var MAX_NAME_LENGTH = 140 - 4 - date.length;
+        var safeName = video.name;
+        if (safeName.length > MAX_NAME_LENGTH) {
+          safeName = safeName.slice(0, MAX_NAME_LENGTH-1) + "…";
+        }
 
+        var status  = safeName + " (" + date + ") " + video["site_detail_url"];
+        var out     = {
+          error:  null,
+          name:   safeName,
+          date:   date,
+          status: status
+        };
+
+        cb(out);
+      } else {
+        // 2016-11-28 rporczak -- It's possible that a video does not exist for
+        //   time of day!
+        var out = {
+          error:  null,
+          name:   null,
+          date:   null,
+          status: null
+        };
+
+        cb(out);
+      }
+    });
+
+  } catch (err) {
     var out = {
-      error:  null,
-      name:   video.name,
-      date:   date,
-      status: status
+      error:  err,
+      name:   null,
+      date:   null,
+      status: null
     };
 
     cb(out);
-  });
+  }
 };
 
+
 handleError = function (error) {
+  // 2016-11-28 rporczak -- General error handler. DM me an
+  //   error and go to sleep for a while.
+  console.log("!! ERROR: ", error);
+
   dm = {
     'screen_name': 'tsiro',
     'text': ('ERROR: "' + error + '"')
@@ -140,45 +192,101 @@ handleError = function (error) {
 
   T.post('direct_messages/new', dm, function(err, reply) {
     if (err) {
-      console.log('error:', err);
+      console.log('   DM error:', err);
     }
   });
 
-  setTimeout(theHat, twoHoursIsh());
+  napTime();
 };
 
+napTime = function () {
+  // 2016-11-28 rporczak -- Wait for a while before trying again.
+  var waitTime = twoHoursIsh();
+  var wakeTime = moment(Date.now() + waitTime).format("lll");
+
+  console.log("!! Going to sleep until " + wakeTime);
+  setTimeout(theHat, waitTime);
+};
+
+
 theHat = function () {
+  console.log("!! Waking up at " + moment().format("lll"));
+
   T.get(
     'users/search', { "q":"TodayInGB" },
     function (err, data, response) {
       if (!exists(err) && exists(data) && exists(data[0])) {
+        // 2016-11-28 rporczak -- Make sure that we get a user back!
+        console.log("   Got user.");
+
         var screen_name = data[0].screen_name;
         var lastStatus  = data[0].status;
 
         if (screen_name === "TodayInGB" && exists(lastStatus)) {
+          // 2016-11-28 rporczak -- Make sure that we found the right account,
+          //   and that it has a status (err on the side of not posting over
+          //   accidentally doubling up).
+          console.log("   @TodayInGB has a most recent tweet.");
+
           var status_text = lastStatus.text;
 
           getTwitterStatus(function(data) {
-            var error   = data.error;
-            var name    = data.name;
-            var date    = data.date;
-            var status  = data.status;
+            if (!exists(data.error) && exists(status)) {
+              // 2016-11-28 rporczak -- We've generated the tweet and not
+              //   thrown an error!!
+              console.log("   Tweet generated, no error.");
 
-            var safeName = name.slice(0, (139 - 4 - date.length));
+              var name      = data.name;
+              var date      = data.date;
+              var status    = data.status;
 
-            if (status_text.indexOf(safeName + " (" + date + ")") === -1) {
-              T.post(
-                'statuses/update', { 'status': status },
-                function (err, data, response) {
-                  if (!err) {
-                    console.log("Success!");
+              if (status_text.indexOf(name + " (" + date + ")") === -1) {
+                T.post(
+                  'statuses/update', { 'status': status },
+                  function (err, data, response) {
+                    if (!err) {
+                      // 2016-11-28 rporczak -- Success!!
+                      console.log("!! Successfully posted tweet: " + status);
+                      napTime();
+                    } else {
+                      // 2016-11-28 rporczak -- Encountered some error tweeting.
+                      console.log("   Error making tweet.");
+                      handleError(err);
+                    }
                   }
-                  // setTimeout(theHat, twoHoursIsh());
-                }
-              );
+                );
+              } else {
+                // 2016-11-28 rporczak -- Woke up too early, our tweet is stale.
+                console.log("   Woke up too early! Tweet is stale. Tweet: " + status);
+                napTime();
+              }
+            } else if (exists(data.error)){
+              // 2016-11-28 rporczak -- Error on tweet creation!! Bounce out
+              //   and report.
+              console.log("   Error during tweet generation!");
+              handleError(data.error);
+            } else {
+              // 2016-11-28 rporczak -- In this case, there was no error but the
+              //   tweet does not exist. This means that there was no video, which
+              //   is ok!
+              console.log("   There's no tweet for this time. Go to sleep.");
+              napTime();
             }
           });
+        } else {
+          // 2016-11-28 rporczak -- Error fetching user!! Wrong one, or no status.
+          console.log("   Error verifying user");
+
+          if (screen_name !== "TodayInGB") {
+            handleError("Got wrong user: " + screen_name);
+          } else {
+            handleError("No previous status!");
+          }
         }
+      } else {
+        // 2016-11-28 rporczak -- Error fetching user!! Bounce out and report.
+        console.log("   Error fetching user!");
+        handleError(err);
       }
     }
   )
