@@ -10,7 +10,7 @@ var T       = new Twit(keys.twitter);
 
 var args = {
   headers: {
-    "User-Agent": "@TodayInGB -- Twitter bot. A handful /videos/ of requests once every couple hours.",
+    "User-Agent": "@TodayInGB -- Twitter bot. A handful of /videos/ requests once every couple hours.",
     "Content-Type": "application/json"
   }
 };
