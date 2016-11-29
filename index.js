@@ -136,10 +136,10 @@ getTwitterStatus = function (cb) {
       console.log("   Video list compiled.");
 
       random.shuffle(results);
-      console.log("     -> results: ", results);
+      console.log("     -> num results: ", results.length);
 
       var video = pickVideo(results, timeBias);
-      console.log("     -> chose video: ", video);
+      console.log("     -> chose video: ", video.name);
 
       if (exists(video)) {
         // 2016-11-28 rporczak -- The video exists for this time of day.
@@ -238,7 +238,7 @@ theHat = function () {
           var status_text = lastStatus.text;
 
           getTwitterStatus(function(data) {
-            if (!exists(data.error) && exists(status)) {
+            if (!exists(data.error) && exists(data.status)) {
               // 2016-11-28 rporczak -- We've generated the tweet and not
               //   thrown an error!!
               console.log("   Tweet generated, no error.");
