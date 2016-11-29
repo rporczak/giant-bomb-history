@@ -1,13 +1,13 @@
-var keys = require('./config.js')
-var moment = require('moment');
+var keys    = require('./config.js');
+var moment  = require('moment');
+var Random  = require('random-js');
 
-var Random = require('random-js');
+var Client  = require('node-rest-client').Client;
+var rest    = new Client();
 
-var Client = require('node-rest-client').Client;
-var rest = new Client();
+var Twit    = require('twit');
+var T       = new Twit(keys.twitter);
 
-var Twit = require('twit');
-var T = new Twit(keys.twitter);
 
 var args = {
   headers: {
@@ -103,7 +103,7 @@ pickVideo = function (videos, timeBias) {
 
 entry = function () {
   var random = new Random(
-    Random.engines.mt19937().seed(moment().format("MMMM DD")));
+    Random.engines.mt19937().seed(moment().format("MMMM DD YYYY")));
 
   // Use the index of the time period in this to pull a deterministically
   //   random video from the videos list. This is to randomly distribute
