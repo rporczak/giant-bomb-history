@@ -269,27 +269,24 @@ theHat = function () {
               var status    = data.status;
 
               if (status_text.indexOf(tweetText) === -1) {
-
-                console.log("STATUS: " + status);
-
-                // T.post(
-                //   'statuses/update', { 'status': status },
-                //   function (err, data, response) {
-                //     if (!err) {
-                //       // 2016-11-28 rporczak -- Success!!
-                //       console.log("!! Successfully posted tweet: " + status);
-                //       napTime();
-                //     } else {
-                //       // 2016-11-28 rporczak -- Encountered some error tweeting.
-                //       console.log("   Error making tweet.");
-                //       if (exists(err.code) && exists(err.message)) {
-                //         handleError(err.code + ": " + err.message);
-                //       } else {
-                //         handleError(err);
-                //       }
-                //     }
-                //   }
-                // );
+                T.post(
+                  'statuses/update', { 'status': status },
+                  function (err, data, response) {
+                    if (!err) {
+                      // 2016-11-28 rporczak -- Success!!
+                      console.log("!! Successfully posted tweet: " + status);
+                      napTime();
+                    } else {
+                      // 2016-11-28 rporczak -- Encountered some error tweeting.
+                      console.log("   Error making tweet.");
+                      if (exists(err.code) && exists(err.message)) {
+                        handleError(err.code + ": " + err.message);
+                      } else {
+                        handleError(err);
+                      }
+                    }
+                  }
+                );
               } else {
                 // 2016-11-28 rporczak -- Woke up too early, our tweet is stale.
                 console.log("   Woke up too early! Tweet is stale. Tweet: " + status);
