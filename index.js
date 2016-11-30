@@ -95,9 +95,9 @@ pickVideo = function (videos, timeBias) {
   var time, index;
   var hour = moment().hour();
 
-  if (hour >= 0 && hour < 8) {
+  if (hour >= 4 && hour < 12) {
     time = "Morning";
-  } else if (hour >= 8 && hour < 16) {
+  } else if (hour >= 12 && hour < 20) {
     time = "Day";
   } else {
     time = "Evening";
@@ -107,6 +107,32 @@ pickVideo = function (videos, timeBias) {
 
   return videos[index];
 };
+
+getTweetText = function (video) {
+  // 2016-11-29 rporczak -- Generate the text of the tweet. Do some
+  //   basic date math to get elapsed time. Tweet date format is:
+  //   "[video name] ([video date], N year[s] ago)"
+  var date      = moment(video["publish_date"]).format("MMM DD, YYYY");
+
+  var thisYear  = moment().tz("America/Los_Angeles").year();
+  var years     = thisYear - moment(video["publish_date"]).year();
+  var yearStr   = "year";
+  if (years !== 1) { yearStr = "years"; }
+
+  var timeStr   = " (" + date + ", " + years + " " + yearStr + " ago) ";
+
+  // 2016-11-29 rporczak -- Tweet length is 140 characters, links add 23
+  //   characters, timeStr is dynamic, so count it on the fly.
+  var MAX_NAME_LENGTH = 140 - 23 - timeStr.length;
+  var safeName = video.name;
+  if (safeName.length > MAX_NAME_LENGTH) {
+    safeName = safeName.slice(0, MAX_NAME_LENGTH-1) + "…";
+  }
+
+  var tweetText = safeName + timeStr;
+
+  return tweetText;
+}
 
 getTwitterStatus = function (cb) {
   // 2016-11-28 rporczak -- Generating twitter status by fetching Giant Bomb
@@ -123,7 +149,7 @@ getTwitterStatus = function (cb) {
   random.shuffle(timeBias);
 
   var years = getYears();
-  var URLs = [];
+  var URLs  = [];
 
   for (var i = 0; i < years.length; i++) {
     var year      = years[i];
@@ -145,20 +171,12 @@ getTwitterStatus = function (cb) {
 
       if (exists(video)) {
         // 2016-11-28 rporczak -- The video exists for this time of day.
-        var date      = moment(video["publish_date"]).format("MMM DD, YYYY");
-
-        var MAX_NAME_LENGTH = 140 - 4 - date.length;
-        var safeName = video.name;
-        if (safeName.length > MAX_NAME_LENGTH) {
-          safeName = safeName.slice(0, MAX_NAME_LENGTH-1) + "…";
-        }
-
-        var status  = safeName + " (" + date + ") " + video["site_detail_url"];
-        var out     = {
-          error:  null,
-          name:   safeName,
-          date:   date,
-          status: status
+        var tweetText = getTweetText(video);
+        var status    = tweetText + video["site_detail_url"];
+        var out       = {
+          error:      null,
+          tweetText:  tweetText,
+          status:     status
         };
 
         cb(out);
@@ -247,29 +265,31 @@ theHat = function () {
               //   thrown an error!!
               console.log("   Tweet generated, no error.");
 
-              var name      = data.name;
-              var date      = data.date;
+              var tweetText = data.tweetText;
               var status    = data.status;
 
-              if (status_text.indexOf(name + " (" + date + ")") === -1) {
-                T.post(
-                  'statuses/update', { 'status': status },
-                  function (err, data, response) {
-                    if (!err) {
-                      // 2016-11-28 rporczak -- Success!!
-                      console.log("!! Successfully posted tweet: " + status);
-                      napTime();
-                    } else {
-                      // 2016-11-28 rporczak -- Encountered some error tweeting.
-                      console.log("   Error making tweet.");
-                      if (exists(err.code) && exists(err.message)) {
-                        handleError(err.code + ": " + err.message);
-                      } else {
-                        handleError(err);
-                      }
-                    }
-                  }
-                );
+              if (status_text.indexOf(tweetText) === -1) {
+
+                console.log("STATUS: " + status);
+
+                // T.post(
+                //   'statuses/update', { 'status': status },
+                //   function (err, data, response) {
+                //     if (!err) {
+                //       // 2016-11-28 rporczak -- Success!!
+                //       console.log("!! Successfully posted tweet: " + status);
+                //       napTime();
+                //     } else {
+                //       // 2016-11-28 rporczak -- Encountered some error tweeting.
+                //       console.log("   Error making tweet.");
+                //       if (exists(err.code) && exists(err.message)) {
+                //         handleError(err.code + ": " + err.message);
+                //       } else {
+                //         handleError(err);
+                //       }
+                //     }
+                //   }
+                // );
               } else {
                 // 2016-11-28 rporczak -- Woke up too early, our tweet is stale.
                 console.log("   Woke up too early! Tweet is stale. Tweet: " + status);
