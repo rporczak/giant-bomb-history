@@ -95,12 +95,14 @@ pickVideo = function (videos, timeBias) {
   var time, index;
   var hour = moment().hour();
 
-  if (hour >= 4 && hour < 12) {
+  if (hour >= 4 && hour < 10) {
     time = "Morning";
-  } else if (hour >= 12 && hour < 20) {
+  } else if (hour >= 10 && hour < 18) {
     time = "Day";
-  } else {
+  } else if (hour >= 18 && hour < 24) {
     time = "Evening";
+  } else {
+    time = "";
   }
 
   index = timeBias.indexOf(time);
