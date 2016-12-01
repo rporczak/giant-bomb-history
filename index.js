@@ -248,88 +248,70 @@ theHat = function () {
   // 2016-11-30 rporczak -- Query string still searching for old name.
   //    Maybe this will change one day! Maybe not.
   T.get(
-    'users/search', { "q":"TodayInGB" },
+    'statuses/user_timeline', { "screen_name":"ThisDayInGB", "count":1 },
     function (err, data, response) {
-      if (!exists(err) && exists(data) && exists(data[0])) {
+
+      if (!exists(err) && exists(data) && exists(data[0]) && exists(data[0].text)) {
         // 2016-11-28 rporczak -- Make sure that we get a user back!
-        console.log("   Got user.");
+        console.log("   Got most recent tweet from @ThisDayInGB.");
 
-        var screen_name = data[0].screen_name;
-        var lastStatus  = data[0].status;
+        var status_text = data[0].text;
 
-        if (screen_name === "ThisDayInGB" && exists(lastStatus)) {
-          // 2016-11-28 rporczak -- Make sure that we found the right account,
-          //   and that it has a status (err on the side of not posting over
-          //   accidentally doubling up).
-          console.log("   @ThisDayInGB has a most recent tweet.");
+        getTwitterStatus(function(data) {
+          if (!exists(data.error) && exists(data.status)) {
+            // 2016-11-28 rporczak -- We've generated the tweet and not
+            //   thrown an error!!
+            console.log("   Tweet generated, no error.");
 
-          var status_text = lastStatus.text;
+            var tweetText = data.tweetText;
+            var status    = data.status;
 
-          getTwitterStatus(function(data) {
-            if (!exists(data.error) && exists(data.status)) {
-              // 2016-11-28 rporczak -- We've generated the tweet and not
-              //   thrown an error!!
-              console.log("   Tweet generated, no error.");
-
-              var tweetText = data.tweetText;
-              var status    = data.status;
-
-              if (status_text.indexOf(tweetText) === -1) {
-                T.post(
-                  'statuses/update', { 'status': status },
-                  function (err, data, response) {
-                    if (!err) {
-                      // 2016-11-28 rporczak -- Success!!
-                      console.log("!! Successfully posted tweet: " + status);
-                      napTime();
+            if (status_text.indexOf(tweetText) === -1) {
+              T.post(
+                'statuses/update', { 'status': status },
+                function (err, data, response) {
+                  if (!err) {
+                    // 2016-11-28 rporczak -- Success!!
+                    console.log("!! Successfully posted tweet: " + status);
+                    napTime();
+                  } else {
+                    // 2016-11-28 rporczak -- Encountered some error tweeting.
+                    console.log("   Error making tweet.");
+                    if (exists(err.code) && exists(err.message)) {
+                      handleError(err.code + ": " + err.message);
                     } else {
-                      // 2016-11-28 rporczak -- Encountered some error tweeting.
-                      console.log("   Error making tweet.");
-                      if (exists(err.code) && exists(err.message)) {
-                        handleError(err.code + ": " + err.message);
-                      } else {
-                        handleError(err);
-                      }
+                      handleError(err);
                     }
                   }
-                );
-              } else {
-                // 2016-11-28 rporczak -- Woke up too early, our tweet is stale.
-                console.log("   Woke up too early! Tweet is stale. Tweet: " + status);
-                napTime();
-              }
-            } else if (exists(data.error)){
-              // 2016-11-28 rporczak -- Error on tweet creation!! Bounce out
-              //   and report.
-              console.log("   Error during tweet generation!");
-              handleError(data.error);
+                }
+              );
             } else {
-              // 2016-11-28 rporczak -- In this case, there was no error but the
-              //   tweet does not exist. This means that there was no video, which
-              //   is ok!
-              console.log("   There's no tweet for this time. Go to sleep.");
+              // 2016-11-28 rporczak -- Woke up too early, our tweet is stale.
+              console.log("   Woke up too early! Tweet is stale. Tweet: " + status);
               napTime();
             }
-          });
-        } else {
-          // 2016-11-28 rporczak -- Error fetching user!! Wrong one, or no status.
-          console.log("   Error verifying user");
-
-          if (screen_name !== "ThisDayInGB") {
-            handleError("Got wrong user: " + screen_name);
+          } else if (exists(data.error)){
+            // 2016-11-28 rporczak -- Error on tweet creation!! Bounce out
+            //   and report.
+            console.log("   Error during tweet generation!");
+            handleError(data.error);
           } else {
-            handleError("No previous status!");
+            // 2016-11-28 rporczak -- In this case, there was no error but the
+            //   tweet does not exist. This means that there was no video, which
+            //   is ok!
+            console.log("   There's no tweet for this time. Go to sleep.");
+            napTime();
           }
-        }
+        });
       } else {
         // 2016-11-28 rporczak -- Error fetching user!! Bounce out and report.
-        console.log("   Error fetching user!");
+        console.log("   Error fetching last tweet from @ThisDayInGB!");
         if (exists(err) && exists(err.code) && exists(err.message)) {
           handleError(err.code + ": " + err.message);
         } else if (exists(err)) {
           handleError(err);
-        } else if (!exists(data) || !exists(data[0])) {
-          handleError("@TodayInGB user query returned no results.");
+        } else if (!exists(data) || !exists(data[0]) || !exists(data[0].text)) {
+          handleError("@ThisDayInGB status query returned no results.");
         } else {
           handleError(err);
         }
