@@ -51,7 +51,7 @@ getVideosURL = function (year) {
   var url = encodeURI(
     'http://www.giantbomb.com/api/videos/?' +
       'api_key=' + keys.gb +
-      '&field_list=name,deck,id,publish_date,site_detail_url' +
+      '&field_list=name,deck,id,publish_date,site_detail_url,video_type' +
       '&filter=publish_date:' + yearRange +
       '&format=json'
   );
@@ -75,7 +75,9 @@ fetchVideos = function (URLs, videos, cb) {
         var results = data["results"];
         if (results.length !== 0) {
           for (var i = 0; i < results.length; i++) {
-            videos.push(results[i]);
+            if (results[i]["video_type"] !== "Trailers") {
+              videos.push(results[i]);
+            }
           }
         }
         fetchVideos(URLs, videos, cb);
