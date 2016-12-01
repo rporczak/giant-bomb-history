@@ -245,8 +245,10 @@ napTime = function () {
 theHat = function () {
   console.log("!! Waking up at " + moment().format("lll"));
 
+  // 2016-11-30 rporczak -- Query string still searching for old name.
+  //    Maybe this will change one day! Maybe not.
   T.get(
-    'users/search', { "q":"ThisDayInGB" },
+    'users/search', { "q":"TodayInGB" },
     function (err, data, response) {
       if (!exists(err) && exists(data) && exists(data[0])) {
         // 2016-11-28 rporczak -- Make sure that we get a user back!
@@ -324,6 +326,10 @@ theHat = function () {
         console.log("   Error fetching user!");
         if (exists(err) && exists(err.code) && exists(err.message)) {
           handleError(err.code + ": " + err.message);
+        } else if (exists(err)) {
+          handleError(err);
+        } else if (!exists(data) || !exists(data[0])) {
+          handleError("@TodayInGB user query returned no results.");
         } else {
           handleError(err);
         }
