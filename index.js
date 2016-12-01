@@ -10,7 +10,7 @@ var T       = new Twit(keys.twitter);
 
 var args = {
   headers: {
-    "User-Agent": "@TodayInGB -- Twitter bot. A handful of /videos/ requests once every couple hours.",
+    "User-Agent": "@ThisDayInGB -- Twitter bot. A handful of /videos/ requests once every couple hours.",
     "Content-Type": "application/json"
   }
 };
@@ -246,7 +246,7 @@ theHat = function () {
   console.log("!! Waking up at " + moment().format("lll"));
 
   T.get(
-    'users/search', { "q":"TodayInGB" },
+    'users/search', { "q":"ThisDayInGB" },
     function (err, data, response) {
       if (!exists(err) && exists(data) && exists(data[0])) {
         // 2016-11-28 rporczak -- Make sure that we get a user back!
@@ -255,11 +255,11 @@ theHat = function () {
         var screen_name = data[0].screen_name;
         var lastStatus  = data[0].status;
 
-        if (screen_name === "TodayInGB" && exists(lastStatus)) {
+        if (screen_name === "ThisDayInGB" && exists(lastStatus)) {
           // 2016-11-28 rporczak -- Make sure that we found the right account,
           //   and that it has a status (err on the side of not posting over
           //   accidentally doubling up).
-          console.log("   @TodayInGB has a most recent tweet.");
+          console.log("   @ThisDayInGB has a most recent tweet.");
 
           var status_text = lastStatus.text;
 
@@ -313,7 +313,7 @@ theHat = function () {
           // 2016-11-28 rporczak -- Error fetching user!! Wrong one, or no status.
           console.log("   Error verifying user");
 
-          if (screen_name !== "TodayInGB") {
+          if (screen_name !== "ThisDayInGB") {
             handleError("Got wrong user: " + screen_name);
           } else {
             handleError("No previous status!");
