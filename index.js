@@ -49,7 +49,7 @@ getVideosURL = function (year) {
 
   var yearRange = start + "|" + end;
   var url = encodeURI(
-    'http://www.giantbomb.com/api/videos/?' +
+    'https://www.giantbomb.com/api/videos/?' +
       'api_key=' + keys.gb +
       '&field_list=name,deck,id,publish_date,site_detail_url,video_type' +
       '&filter=publish_date:' + yearRange +
