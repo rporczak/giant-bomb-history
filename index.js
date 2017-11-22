@@ -210,6 +210,12 @@ getTwitterStatus = function (cb) {
   }
 };
 
+decodeHTML = function (text) {
+  // 2017-11-21 rporczak -- Not sure which characters are being encoded so
+  //  I'm just gonna fix them as they come up.
+  return text
+    .replace(/\&amp;/mg, "&");
+}
 
 handleError = function (error) {
   // 2016-11-28 rporczak -- General error handler. DM me an
@@ -249,27 +255,27 @@ theHat = function () {
   //    Maybe this will change one day! Maybe not.
   T.get(
     'statuses/user_timeline', { "screen_name":"ThisDayInGB", "count":1 },
-    function (err, data, response) {
+    function (err, twitterData, response) {
 
-      if (!exists(err) && exists(data) && exists(data[0]) && exists(data[0].text)) {
+      if (!exists(err) && exists(twitterData) && exists(twitterData[0]) && exists(twitterData[0].text)) {
         // 2016-11-28 rporczak -- Make sure that we get a user back!
-        console.log("   Got most recent tweet from @ThisDayInGB.");
+        console.log("   Got most recent tweet from @ThisDayInGB: '" + twitterData[0].text + "'");
 
-        var status_text = data[0].text;
+        var statusText = decodeHTML(twitterData[0].text);
 
-        getTwitterStatus(function(data) {
-          if (!exists(data.error) && exists(data.status)) {
+        getTwitterStatus(function(newData) {
+          if (!exists(newData.error) && exists(newData.status)) {
             // 2016-11-28 rporczak -- We've generated the tweet and not
             //   thrown an error!!
             console.log("   Tweet generated, no error.");
 
-            var tweetText = data.tweetText;
-            var status    = data.status;
+            var tweetText = newData.tweetText;
+            var status    = newData.status;
 
-            if (status_text.indexOf(tweetText) === -1) {
+            if (statusText.indexOf(tweetText) === -1) {
               T.post(
                 'statuses/update', { 'status': status },
-                function (err, data, response) {
+                function (err, newData, response) {
                   if (!err) {
                     // 2016-11-28 rporczak -- Success!!
                     console.log("!! Successfully posted tweet: " + status);
@@ -290,11 +296,11 @@ theHat = function () {
               console.log("   Woke up too early! Tweet is stale. Tweet: " + status);
               napTime();
             }
-          } else if (exists(data.error)){
+          } else if (exists(newData.error)){
             // 2016-11-28 rporczak -- Error on tweet creation!! Bounce out
             //   and report.
             console.log("   Error during tweet generation!");
-            handleError(data.error);
+            handleError(newData.error);
           } else {
             // 2016-11-28 rporczak -- In this case, there was no error but the
             //   tweet does not exist. This means that there was no video, which
@@ -310,7 +316,7 @@ theHat = function () {
           handleError(err.code + ": " + err.message);
         } else if (exists(err)) {
           handleError(err);
-        } else if (!exists(data) || !exists(data[0]) || !exists(data[0].text)) {
+        } else if (!exists(twitterData) || !exists(twitterData[0]) || !exists(twitterData[0].text)) {
           handleError("@ThisDayInGB status query returned no results.");
         } else {
           handleError(err);
