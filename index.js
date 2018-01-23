@@ -15,6 +15,10 @@ var args = {
   }
 };
 
+var VIDEO_BLACKLIST = [
+  9909
+];
+
 exists = function (x) { return (typeof x !== "undefined" && x !== null); };
 
 getTime = function () { return moment().tz("America/Los_Angeles").unix() * 1000; }
@@ -75,7 +79,10 @@ fetchVideos = function (URLs, videos, cb) {
         var results = data["results"];
         if (results.length !== 0) {
           for (var i = 0; i < results.length; i++) {
-            if (results[i]["video_type"] !== "Trailers") {
+            if (
+              (results[i]["video_type"] !== "Trailers") &&
+              (VIDEO_BLACKLIST.indexOf(results[i]["id"]) === -1)
+            ) {
               videos.push(results[i]);
             }
           }
