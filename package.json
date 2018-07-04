@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "node-rest-client": ">=1.8.0",
-    "twit": ">=2.2.2",
+    "twit": ">=2.2.11",
     "moment": ">=2.14.0",
     "moment-timezone": ">=0.5.10",
     "random-js": ">=1.0.8"
