@@ -171,31 +171,45 @@ getTwitterStatus = function (cb) {
 
   try {
     fetchVideos(URLs, [], function (results) {
-      // 2016-11-28 rporczak -- Video fetching complete.
-      console.log("   Video list compiled.");
+      try {
+        // 2016-11-28 rporczak -- Video fetching complete.
+        console.log("   Video list compiled.");
 
-      random.shuffle(results);
-      console.log("     -> num results: ", results.length);
+        random.shuffle(results);
+        console.log("     -> num results: ", results.length);
 
-      var video = pickVideo(results, timeBias);
-      console.log("     -> chose video: ", video.name);
+        var video = pickVideo(results, timeBias);
+        console.log("     -> chose video: ", video.name);
 
-      if (exists(video)) {
-        // 2016-11-28 rporczak -- The video exists for this time of day.
-        var tweetText = getTweetText(video);
-        var status    = tweetText + video["site_detail_url"];
-        var out       = {
-          error:      null,
-          tweetText:  tweetText,
-          status:     status
-        };
+        if (exists(video)) {
+          // 2016-11-28 rporczak -- The video exists for this time of day.
+          var tweetText = getTweetText(video);
+          var status    = tweetText + video["site_detail_url"];
+          var out       = {
+            error:      null,
+            tweetText:  tweetText,
+            status:     status
+          };
 
-        cb(out);
-      } else {
-        // 2016-11-28 rporczak -- It's possible that a video does not exist for
-        //   time of day!
+          cb(out);
+        } else {
+          // 2016-11-28 rporczak -- It's possible that a video does not exist for
+          //   time of day!
+          var out = {
+            error:  null,
+            name:   null,
+            date:   null,
+            status: null
+          };
+
+          cb(out);
+        }
+      } catch (err) {
+        console.log("    !! Error in Fetch Videos callback!");
+        console.log("         results: ", JSON.stringify(results));
+
         var out = {
-          error:  null,
+          error:  err,
           name:   null,
           date:   null,
           status: null
